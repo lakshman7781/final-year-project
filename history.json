@@ -1,0 +1,39 @@
+[
+  {
+    "timestamp": "2026-02-12T01:35:45.781203",
+    "text_preview": "Testing history feature...",
+    "is_fake": true,
+    "confidence": 0.6290101407352225,
+    "stress_level": "Low"
+  },
+  {
+    "timestamp": "2026-02-12T01:37:26.074806",
+    "text_preview": "SHOCKING secret revealed! Aliens are definitely re...",
+    "is_fake": true,
+    "confidence": 0.652283027752316,
+    "stress_level": "High"
+  },
+  {
+    "timestamp": "2026-02-12T01:37:46.048353",
+    "text_preview": "Hasina in Delhi, Zia\u2019s son in Dhaka: Why Banglades...",
+    "is_fake": true,
+    "confidence": 0.6290101407352225,
+    "stress_level": "Low"
+  },
+  {
+    "timestamp": "2026-02-12T01:39:52.027640",
+    "text_preview": "Hasina in Delhi, Zia\u2019s son in Dhaka: Why Banglades...",
+    "full_text": "Hasina in Delhi, Zia\u2019s son in Dhaka: Why Bangladesh polls are big focus",
+    "is_fake": true,
+    "confidence": 0.6290101407352225,
+    "stress_level": "Low"
+  },
+  {
+    "timestamp": "2026-02-12T01:41:28.322278",
+    "text_preview": "3 injured in Thailand school shooting, gunman shot...",
+    "full_text": "3 injured in Thailand school shooting, gunman shot at, arrested; hostages freed\nSeveral videos surfaced on social media showing students and others fleeing the active shooting area. The people were seen rushing and taking shelter.",
+    "is_fake": true,
+    "confidence": 0.6608993499935989,
+    "stress_level": "Low"
+  }
+]

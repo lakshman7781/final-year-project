@@ -1,0 +1,10 @@
+flask
+pymongo
+scikit-learn
+pandas
+numpy
+nltk
+joblib
+requests
+beautifulsoup4
+textblob

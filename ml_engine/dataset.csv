@@ -1,0 +1,11 @@
+title,text,label,category,target_entity
+"BREAKING: Aliens Land in Times Square!", "Witnesses claim to have seen a UFO landing in the middle of Times Square. Authorities are silent.", 1, "science", "Alien"
+"New Health Study released", "A new study shows that drinking water is good for you.", 0, "health", "health"
+"Celebrity X arrested for tax fraud", "Famous celebrity X has been arrested for massive tax evasion. Sources say he is in custody.", 1, "politics", "Celebrity X"
+"Stock Market hits all time high", "The stock market reached a new record high today driven by tech stocks.", 0, "finance", "market"
+"Cure for all diseases found!", "A miracle drug has been discovered that cures all known diseases instantly.", 1, "health", "drug company"
+"Local election results announced", "The local election results have been announced with the incumbent winning by a small margin.", 0, "politics", "politician"
+"Government to ban all internet access", "The government is planning to shut down the internet completely next week.", 1, "politics", "government"
+"Tech company releases new phone", "The latest smartphone features a better camera and longer battery life.", 0, "technology", "tech company"
+"Natural disaster warning issued", "Meteorologists warn of a severe storm approaching the coast this weekend.", 0, "environment", "weather"
+"Secret society controls the world", "Leaked documents reveal a secret society has been controlling world events for centuries.", 1, "conspiracy", "secret society"

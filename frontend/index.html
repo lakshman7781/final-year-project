@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TruthGuard: Fake News Detector</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>TruthGuard</h1>
+            <p>AI-Powered Fake News Detection & Wellness System</p>
+            <nav id="main-nav">
+                <button id="nav-home" class="active">Analyzer</button>
+                <button id="nav-dashboard">Dashboard</button>
+            </nav>
+        </header>
+
+        <main id="view-analyzer">
+            <section id="analysis-section">
+                <h2>Analyze News</h2>
+                <textarea id="news-input" placeholder="Paste news headline or text here..."></textarea>
+                <button id="analyze-btn">Analyze Credibility</button>
+
+                <div id="result-area" class="hidden">
+                    <div class="gauge-container">
+                        <div id="gauge-label">Authenticity Score</div>
+                        <div class="gauge-bar">
+                            <div id="gauge-fill"></div>
+                        </div>
+                        <div id="gauge-value">0%</div>
+                    </div>
+                    <div id="verdict"></div>
+
+                    <div id="fact-check-section" class="hidden">
+                        <h3>Live Fact-Check Results</h3>
+                        <ul id="fact-check-list"></ul>
+                    </div>
+
+                    <div id="advanced-analysis-section" class="hidden">
+                        <h3>Advanced Linguistics</h3>
+                        <p><strong>Sentiment:</strong> <span id="sentiment-label"></span></p>
+                        <div id="triggers-container">
+                            <strong>Emotional Triggers:</strong> <span id="trigger-words"></span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="panels-container">
+                <section id="stress-panel" class="panel hidden">
+                    <h3>Stress Reduction</h3>
+                    <p>This content has been flagged as high-stress. Here are some resources:</p>
+                    <ul id="stress-resources"></ul>
+                </section>
+
+                <section id="reputation-panel" class="panel">
+                    <h3>Reputation Management</h3>
+                    <div id="reputation-content">Loading...</div>
+                </section>
+            </div>
+        </main>
+
+        <main id="view-dashboard" class="hidden">
+            <h2>Analysis Analytics</h2>
+            <div class="chart-container">
+                <canvas id="trendChart"></canvas>
+            </div>
+            <h3>Recent Analysis History</h3>
+            <ul id="history-list"></ul>
+        </main>
+    </div>
+    <script src="app.js"></script>
+</body>
+
+</html>
