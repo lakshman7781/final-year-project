@@ -60,11 +60,26 @@ document.addEventListener('DOMContentLoaded', () => {
             text = 'Likely Fake';
         }
 
-        gaugeFill.style.width = `${confidencePercent}%`;
-        gaugeFill.style.backgroundColor = color;
-        gaugeValue.textContent = `${confidencePercent}% Confidence`;
-        verdict.textContent = text;
-        verdict.style.color = color;
+        // Show warning for short inputs
+        if (data.warning) {
+            color = '#f59e0b'; // Orange/amber
+            text = '⚠️ Insufficient Data';
+            verdict.innerHTML = `<div style="color: ${color}; margin-bottom: 0.5rem;">${text}</div>
+                <div style="font-size: 0.9rem; font-weight: normal; color: #64748b;">
+                    ${data.warning}
+                    <br><br>
+                    <strong>Tip:</strong> ${data.suggestion}
+                </div>`;
+            gaugeFill.style.width = `${confidencePercent}%`;
+            gaugeFill.style.backgroundColor = color;
+            gaugeValue.textContent = 'Need More Context';
+        } else {
+            gaugeFill.style.width = `${confidencePercent}%`;
+            gaugeFill.style.backgroundColor = color;
+            gaugeValue.textContent = `${confidencePercent}% Confidence`;
+            verdict.textContent = text;
+            verdict.style.color = color;
+        }
 
         // Display Fact Checks
         const factCheckSection = document.getElementById('fact-check-section');
