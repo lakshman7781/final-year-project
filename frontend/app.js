@@ -112,18 +112,158 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             advancedSection.classList.remove('hidden');
         }
+
+        // NEW: Display Stress Analysis
+        displayStressAnalysis(data.stress_analysis);
+
+        // NEW: Display Extracted Entities
+        displayEntities(data.entities);
+    }
+
+    function displayStressAnalysis(stressData) {
+        if (!stressData) return;
+
+        const stressSection = document.getElementById('stress-analysis-section');
+        const stressScoreEl = document.getElementById('stress-score');
+        const stressLevelEl = document.getElementById('stress-level');
+        const riskFactorsEl = document.getElementById('risk-factors');
+        const stressRecommendationsEl = document.getElementById('stress-recommendations');
+
+        // Display stress score with color
+        stressScoreEl.textContent = `${stressData.stress_score}/100`;
+        stressScoreEl.style.color = stressData.stress_color;
+        stressLevelEl.textContent = stressData.stress_level;
+        stressLevelEl.style.color = stressData.stress_color;
+
+        // Display risk factors as bars
+        if (stressData.risk_factors) {
+            const factors = stressData.risk_factors;
+            riskFactorsEl.innerHTML = Object.entries(factors)
+                .filter(([key, value]) => value > 0)
+                .map(([key, value]) => `
+                    <div class="risk-factor">
+                        <span class="factor-name">${key}:</span>
+                        <div class="factor-bar">
+                            <div class="factor-fill" style="width: ${value * 100}%; background-color: ${getFactorColor(value)}"></div>
+                        </div>
+                        <span class="factor-value">${Math.round(value * 100)}%</span>
+                    </div>
+                `).join('');
+        }
+
+        // Display recommendations
+        if (stressData.recommendations && stressData.recommendations.length > 0) {
+            stressRecommendationsEl.innerHTML = stressData.recommendations.map(rec => `
+                <div class="recommendation ${rec.priority.toLowerCase()}">
+                    <span class="rec-icon">${rec.icon}</span>
+                    <div class="rec-content">
+                        <strong>${rec.text}</strong>
+                        <p>${rec.action}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        stressSection.classList.remove('hidden');
+    }
+
+    function getFactorColor(value) {
+        if (value >= 0.7) return '#dc2626';  // Red
+        if (value >= 0.5) return '#f59e0b';  // Orange
+        if (value >= 0.3) return '#fbbf24';  // Yellow
+        return '#22c55e';  // Green
+    }
+
+    function displayEntities(entitiesData) {
+        if (!entitiesData || entitiesData.total_count === 0) return;
+
+        const entitiesSection = document.getElementById('entities-section');
+        const entitiesList = document.getElementById('entities-list');
+        const entitiesCount = document.getElementById('entities-count');
+
+        entitiesCount.textContent = `${entitiesData.total_count} entities detected`;
+
+        // Display primary subjects prominently
+        if (entitiesData.primary_subjects && entitiesData.primary_subjects.length > 0) {
+            const primaryHTML = entitiesData.primary_subjects.map(entity => `
+                <div class="entity-card primary">
+                    <span class="entity-icon">${entity.icon}</span>
+                    <div class="entity-info">
+                        <strong>${entity.name}</strong>
+                        <span class="entity-type">${entity.type}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            entitiesList.innerHTML = `
+                <div class="primary-entities">
+                    <h4>Main Subjects</h4>
+                    <div class="entities-grid">${primaryHTML}</div>
+                </div>
+            `;
+        }
+
+        // Display all entities by category
+        if (entitiesData.entities_by_category) {
+            const categoryHTML = Object.entries(entitiesData.entities_by_category)
+                .map(([category, entities]) => `
+                    <div class="entity-category">
+                        <strong>${category}:</strong>
+                        ${entities.map(e => `<span class="entity-tag">${e}</span>`).join(' ')}
+                    </div>
+                `).join('');
+
+            entitiesList.innerHTML += `
+                <div class="all-entities">
+                    <h4>All Detected Entities</h4>
+                    ${categoryHTML}
+                </div>
+            `;
+        }
+
+        entitiesSection.classList.remove('hidden');
     }
 
     async function loadStressResources() {
         try {
             const response = await fetch('/api/stress-relief');
-            const resources = await response.json();
+            const data = await response.json();
 
-            stressResources.innerHTML = resources.map(r =>
-                `<li><a href="${r.link}" target="_blank">${r.title}</a>: ${r.desc}</li>`
-            ).join('');
+            if (data.resources && data.resources.length > 0) {
+                stressResources.innerHTML = data.resources.map(r => {
+                    let content = `<li class="stress-resource ${r.type || ''}">`;
+                    content += `<strong>${r.title}</strong>`;
+                    if (r.contact) {
+                        content += `<div class="resource-contact">📞 ${r.contact}</div>`;
+                    }
+                    if (r.link) {
+                        content += `<div><a href="${r.link}" target="_blank">Access Resource →</a></div>`;
+                    }
+                    if (r.description) {
+                        content += `<p>${r.description}</p>`;
+                    }
+                    if (r.duration) {
+                        content += `<span class="duration">⏱️ ${r.duration}</span>`;
+                    }
+                    if (r.priority === 'URGENT') {
+                        content += `<span class="urgent-badge">🚨 URGENT</span>`;
+                    }
+                    content += `</li>`;
+                    return content;
+                }).join('');
 
-            stressPanel.classList.remove('hidden');
+                // Show stress level if available
+                if (data.stress_level) {
+                    const levelBadge = document.createElement('div');
+                    levelBadge.className = `stress-level-badge ${data.stress_level.toLowerCase()}`;
+                    levelBadge.textContent = `Stress Level: ${data.stress_level} (${data.stress_score}/100)`;
+                    stressPanel.insertBefore(levelBadge, stressResources);
+                }
+
+                stressPanel.classList.remove('hidden');
+            } else {
+                stressPanel.classList.add('hidden');
+            }
         } catch (e) {
             console.error("Failed to load stress resources", e);
         }

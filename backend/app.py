@@ -7,6 +7,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from ml_engine.predictor import FakeNewsPredictor
 from backend.scraper import GoogleNewsScraper
+from ml_engine.stress_analyzer import stress_analyzer
+from ml_engine.entity_extractor import entity_extractor
 
 app = Flask(__name__, template_folder='../frontend', static_folder='../frontend', static_url_path='')
 
@@ -31,7 +33,9 @@ class HistoryManager:
                 "full_text": text,
                 "is_fake": result['is_fake'],
                 "confidence": result['confidence'],
-                "stress_level": result.get('stress_level', 'Unknown')
+                "stress_level": result.get('stress_level', 'Unknown'),
+                "stress_score": result.get('stress_score', 0),
+                "entities": result.get('entities', {})
             }
             history.append(entry)
             
@@ -96,6 +100,20 @@ def analyze():
     found_triggers = [word for word in TRIGGER_WORDS if word in text.lower()]
     result['triggers'] = list(set(found_triggers))
     
+    # NEW: Enhanced Stress Analysis
+    stress_analysis = stress_analyzer.analyze_text(
+        text,
+        result['is_fake'],
+        result['confidence']
+    )
+    result['stress_analysis'] = stress_analysis
+    result['stress_score'] = stress_analysis['stress_score']
+    result['stress_level'] = stress_analysis['stress_level']
+    
+    # NEW: Entity Extraction
+    entities = entity_extractor.extract_entities(text)
+    result['entities'] = entities
+    
     # Log to history
     history_manager.log(text, result)
     
@@ -107,42 +125,183 @@ def get_history():
 
 @app.route('/api/stress-relief', methods=['GET'])
 def stress_relief():
+    """
+    Get stress relief resources based on most recent analysis
+    """
+    try:
+        history = history_manager.get_history()
+        if history and 'stress_analysis' in history[-1]:
+            stress_data = history[-1].get('stress_analysis', {})
+            resources = stress_data.get('resources', [])
+            return jsonify({
+                'resources': resources,
+                'stress_score': stress_data.get('stress_score', 0),
+                'stress_level': stress_data.get('stress_level', 'Unknown'),
+                'recommendations': stress_data.get('recommendations', [])
+            })
+    except Exception as e:
+        print(f"Error getting stress relief: {e}")
+    
+    # Fallback to default resources
     resources = [
-        {"title": "Meditation Guide", "link": "#", "desc": "10-minute guided meditation"},
-        {"title": "Deep Breathing", "link": "#", "desc": "Breathing exercises for anxiety"},
-        {"title": "Professional Help", "link": "#", "desc": "Contact a counselor"}
+        {
+            'title': 'Mental Health Helpline',
+            'contact': '988',
+            'description': '24/7 crisis support',
+            'type': 'crisis'
+        },
+        {
+            'title': 'Guided Meditation',
+            'link': 'https://www.headspace.com/meditation',
+            'description': '10-minute stress relief',
+            'type': 'meditation'
+        },
+        {
+            'title': 'Digital Detox Tips',
+            'description': 'Limit news to 30 min/day',
+            'type': 'advice'
+        }
     ]
-    return jsonify(resources)
+    return jsonify({'resources': resources})
 
 @app.route('/api/reputation', methods=['GET'])
 def reputation():
-    # Attempt to get the last analyzed text from history to find the entity
+    """
+    Get reputation summary for entities mentioned in last analyzed text
+    """
     history = history_manager.get_history()
-    entity_name = "User/Organization"
     
-    if history:
-        last_entry = history[-1]
+    if not history:
+        return jsonify({
+            "entity": "No analysis yet",
+            "score": 50,
+            "mentions": [],
+            "action_items": ["Analyze some news to see reputation insights"]
+        })
+    
+    last_entry = history[-1]
+    entities_data = last_entry.get('entities', {})
+    
+    # Get primary subjects (people/organizations)
+    primary_subjects = entities_data.get('primary_subjects', [])
+    
+    if primary_subjects:
+        entity_name = primary_subjects[0]['name']
+        entity_type = primary_subjects[0]['type']
+    else:
+        # Fallback to trying to extract from text
         try:
-            # Use full text if available, otherwise preview
             text_source = last_entry.get('full_text', last_entry.get('text_preview', ''))
             blob = TextBlob(text_source)
             if blob.noun_phrases:
-                # Pick the most frequent or first noun phrase
                 entity_name = blob.noun_phrases[0].title()
+                entity_type = "Entity"
+            else:
+                entity_name = "Subject"
+                entity_type = "Unknown"
         except:
-            pass
-
-    # Mock data for demonstration
+            entity_name = "Subject"
+            entity_type = "Unknown"
+    
+    # Calculate reputation factors
+    is_fake = last_entry.get('is_fake', False)
+    confidence = last_entry.get('confidence', 0.5)
+    sentiment_score = last_entry.get('sentiment_score', 0)
+    stress_score = last_entry.get('stress_score', 0)
+    
+    # Reputation scoring
+    base_score = 75  # Neutral starting point
+    
+    # Adjust based on authenticity
+    if is_fake:
+        base_score -= (confidence * 30)  # Fake news hurts reputation
+    
+    # Adjust based on sentiment
+    base_score += (sentiment_score * 10)  # Positive sentiment helps
+    
+    # Adjust based on stress/negativity
+    base_score -= (stress_score * 0.2)  # High stress content hurts
+    
+    # Cap between 0-100
+    reputation_score = max(0, min(100, base_score))
+    
+    # Generate mentions summary
+    mentions = []
+    if is_fake:
+        mentions.append({
+            "source": "Fake News Detection",
+            "sentiment": "Negative",
+            "text": f"{entity_name} mentioned in detected fake news article",
+            "impact": "High negative impact on reputation"
+        })
+    else:
+        if sentiment_score > 0.1:
+            mentions.append({
+                "source": "News Analysis",
+                "sentiment": "Positive",
+                "text": f"{entity_name} mentioned in positive context",
+                "impact": "Neutral to positive impact"
+            })
+        elif sentiment_score < -0.1:
+            mentions.append({
+                "source": "News Analysis",
+                "sentiment": "Negative",
+                "text": f"{entity_name} mentioned in negative context",
+                "impact": "Moderate negative impact"
+            })
+        else:
+            mentions.append({
+                "source": "News Analysis",
+                "sentiment": "Neutral",
+                "text": f"{entity_name} mentioned in neutral reporting",
+                "impact": "Minimal impact"
+            })
+    
+    # Generate action items
+    action_items = []
+    if is_fake and confidence > 0.7:
+        action_items.append(f"🚨 URGENT: Submit fact-check request for claims about {entity_name}")
+        action_items.append(f"Consider issuing official statement clarifying misinformation")
+    elif sentiment_score < -0.3:
+        action_items.append(f"Monitor negative sentiment trends for {entity_name}")
+        action_items.append(f"Consider engaging with community to address concerns")
+    elif reputation_score >= 70:
+        action_items.append(f"Reputation is healthy - maintain current communication strategy")
+    else:
+        action_items.append(f"Review recent mentions and address any concerns")
+    
+    # Add all detected entities as context
+    all_entities_summary = []
+    if 'entities_by_category' in entities_data:
+        for category, entity_list in entities_data['entities_by_category'].items():
+            all_entities_summary.extend([
+                f"{category}: {', '.join(entity_list[:3])}"
+            ])
+    
     report = {
         "entity": entity_name,
-        "score": 85,
-        "mentions": [
-            {"source": "Twitter", "sentiment": "Negative", "text": f"Fake news detected about {entity_name}..."},
-            {"source": "Facebook", "sentiment": "Neutral", "text": f"Mentioned in passing regarding {entity_name}..."}
-        ],
-        "action_items": [f"Clarify statement about {entity_name}", "Report fake post"]
+        "entity_type": entity_type,
+        "score": round(reputation_score, 1),
+        "grade": _get_reputation_grade(reputation_score),
+        "mentions": mentions,
+        "action_items": action_items,
+        "all_entities": all_entities_summary,
+        "total_entities_detected": entities_data.get('total_count', 0)
     }
     return jsonify(report)
+
+def _get_reputation_grade(score):
+    """Convert reputation score to letter grade"""
+    if score >= 90:
+        return "A (Excellent)"
+    elif score >= 80:
+        return "B (Good)"
+    elif score >= 70:
+        return "C (Fair)"
+    elif score >= 60:
+        return "D (Poor)"
+    else:
+        return "F (Critical)"
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5001)
